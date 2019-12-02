@@ -27,6 +27,7 @@ void setup() {
 }
 char code;
 int myNum; 
+
 void loop() {
 
   if(Serial.available()){
@@ -39,9 +40,15 @@ void loop() {
     // ping code block
     Serial.print("Sending Ping - ID: ");
     Serial.println(myNum); 
+    
+    LoRa.beginPacket();
+    LoRa.print(code);
+    LoRa.print(myNum);
+    LoRa.endPacket();
+
     break;
   case 'g':
-    Serial.println("sending Get Data ");
+    Serial.println("Sending Get Data ");
     break;
   default:
     int i = 0;
