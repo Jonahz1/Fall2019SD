@@ -60,6 +60,15 @@ void loop() {
    Serial.print(myData.dissolved_oxygen());
    Serial.println(" mg/L");
 
+  int packetSize = LoRa.parsePacket();
+  if (packetSize){
+    Serial.print("Recieved a packet");
+    
+    while (LoRa.available()) {
+      String LoRaData = LoRa.readString();
+      Serial.print(LoRaData); 
+    }
+  }
   // myData.read(); //first we read from the bar02 sensor
   // Serial.print("Pressure: ");
   // Serial.print(myData.pressure());
