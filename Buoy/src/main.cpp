@@ -16,7 +16,17 @@
 sensor myData; 
 eeprom myEEPROM; //create instance of eeprom
 
+void onLoRaRx(int packetSize){
+  Serial.println("LoRa packet received.");
+  while (LoRa.available()) {
+    Serial.printf("LoRa Packet: %s\n", LoRa.readString().c_str());
+    //String LoRaData = LoRa.readString();
+    //Serial.println(LoRaData); 
+  }
+}
+
 void setup() {
+  //attachInterrupt(dio0,onLoRaRx,CHANGE);
   Wire.begin();
   Serial.begin(9600);
   delay(10);
@@ -48,6 +58,8 @@ void setup() {
   }
 
   LoRa.setSyncWord(0xF3);
+  LoRa.receive();
+  LoRa.onReceive(onLoRaRx);
   Serial.println("LoRa Initializing OK!");
   Serial.println("Starting Buoy Program");
 
@@ -56,19 +68,9 @@ void setup() {
 int temp_address = 0; 
 
 void loop() {
-   Serial.print("DO: ");
-   Serial.print(myData.dissolved_oxygen());
-   Serial.println(" mg/L");
-
-  int packetSize = LoRa.parsePacket();
-  if (packetSize){
-    Serial.print("Recieved a packet");
-    
-    while (LoRa.available()) {
-      String LoRaData = LoRa.readString();
-      Serial.print(LoRaData); 
-    }
-  }
+  Serial.printf("DO: %.2f mg/L\n", myData.dissolved_oxygen());
+  delay(7*1000); // 7 second delay between DO checks
+  
   // myData.read(); //first we read from the bar02 sensor
   // Serial.print("Pressure: ");
   // Serial.print(myData.pressure());
@@ -95,5 +97,5 @@ void loop() {
 
 
   //Serial.println();  
-  delay(1000);
+  //delay(1000);
 }
