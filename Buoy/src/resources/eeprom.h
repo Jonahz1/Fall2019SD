@@ -1,5 +1,7 @@
 #include "Arduino.h"
 
+#define MAX_EEPROM_SIZE 256000
+
 class eeprom {
     public: 
         eeprom();
