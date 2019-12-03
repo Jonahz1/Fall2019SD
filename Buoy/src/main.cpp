@@ -2,6 +2,15 @@
 #include "./resources/eeprom.h"
 #include <Wire.h>
 
+//LoRa  ------------------------------
+#include <LoRa.h>
+#include <SPI.h>
+
+//define the pins used by the transceiver module
+#define ss 5
+#define rst 14
+#define dio0 2
+// ------------------------------------
 //MOTOR SETUP ///////////////////////////////////////////
 //Encoder Pins
 #define encoder_a 32
@@ -19,29 +28,21 @@ const int pwmChannel = 0;
 const int resolution = 8;
 int dutyCycle = 200;
 
-// Motor ISR
-void EncoderEvent() {
-  count++;
-  //Serial.print(count);
-  if (count == 4000){
-    Serial.println("Count is 4000");
-    Serial.print(count);
-  }
+// // Motor ISR
+// void EncoderEvent() {
+//   count++;
+//   //Serial.print(count);
+//   if (count == 4000){
+//     Serial.println("Count is 4000");
+//     Serial.print(count);
+//   }
 
-  if(count%100==0){
-    Serial.print(count);
-  }
-}
+//   if(count%100==0){
+//     Serial.print(count);
+//   }
+// }
 
-//LoRa  ------------------------------
-#include <LoRa.h>
-#include <SPI.h>
 
-//define the pins used by the transceiver module
-#define ss 5
-#define rst 14
-#define dio0 2
-// ------------------------------------
 
 sensor myData; 
 eeprom myEEPROM; //create instance of eeprom
@@ -72,10 +73,10 @@ void setup() {
   // attach the channel to the GPIO to be controlled
   ledcAttachPin(enable1Pin, pwmChannel);
   ledcWrite(pwmChannel, dutyCycle);
-  attachInterrupt(digitalPinToInterrupt(encoder_a), EncoderEvent, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(encoder_a), EncoderEvent, CHANGE);
   //Spin the motor forward
-  digitalWrite(motor1Pin1, LOW);
-  digitalWrite(motor1Pin2, HIGH); 
+  //digitalWrite(motor1Pin1, LOW);
+  //digitalWrite(motor1Pin2, HIGH); 
   //////////////////////////////////////////////
 
   Wire.begin();
@@ -114,9 +115,7 @@ void setup() {
         // interval
         //myEEPROM.write_interval(498);
         Serial.printf("EEPROM interval test (498 expected): %d\n",(int)myEEPROM.read_interval());
-  }
-
-
+  } // end if EEPROM init
 
   //Initialize sensors - resets and calibrates sensors
   Serial.print("Initializing Sensors");
@@ -126,7 +125,6 @@ void setup() {
   }
   Serial.println("");
   Serial.println("Sensor Init Complete!");
-
 
   //Lets see what I2C devices are out there... after we have already initialized our sensors
   myData.i2c_scan();
@@ -151,27 +149,28 @@ void setup() {
 
 //int temp_address = 0; 
 
+float temp_ambient     = 0.0;
+float pressure_ambient = 0.0;
+float wind_speed       = 0.0;
+float lux              = 0.0;
+float temp_water       = 0.0;
+float pressure_water   = 0.0;
+float dissolved_oxygen = 0.0;
+int timestamp          = 0;
+byte current_data_package[33]; // one extra character, which will NULL terminate when this array is used as a string
+
 void loop() {
-  float temp_ambient     = 0.0;
-  float pressure_ambient = 0.0;
-  float wind_speed       = 0.0;
-  float lux              = 0.0;
-  float temp_water       = 0.0;
-  float pressure_water   = 0.0;
-  float dissolved_oxygen = 0.0;
-  int timestamp          = 0;
-  byte current_data_package[33]; // one extra character, which will NULL terminate when this array is used as a string
 
   // sleep when not doing things
   delay(7*1000); // 7 second delay between sensor checks
   // read ALL the SENSORS
   temp_ambient     = 23.45;
   pressure_ambient = 1011.66;
-  wind_speed       = 4.5;
+  wind_speed       =+ 4.5;
   lux              = 0.0;
   temp_water       = 19.3456433;
   pressure_water   = 990.0;
-  dissolved_oxygen =  myData.dissolved_oxygen();
+  dissolved_oxygen = myData.dissolved_oxygen();
   timestamp        = millis();
 
     // DEBUG
@@ -193,11 +192,19 @@ void loop() {
       // packet to serial
       //Serial.println((char*)&current_data_package);
       // packet to EEPROM
+      // String data = "";
+      // for(int i =0; i < 32; i++){
+      //   data += current_data_package[i];
+      // }
 
       // packet to LoRa
       LoRa.beginPacket();
-      LoRa.print((char*)&current_data_package);
+      LoRa.write((uint8_t*)&current_data_package, 32);
       LoRa.endPacket();
+      LoRa.receive();
+      
+      Serial.write((uint8_t*)&current_data_package, 32);
+      Serial.println();
 
   next_addr += 32;
   while(next_addr%32!=0){
