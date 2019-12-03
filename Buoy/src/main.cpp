@@ -7,6 +7,21 @@
 #include <LoRa.h>
 #include <SPI.h>
 
+//Temp //////////////////////////////
+
+#include <OneWire.h> 
+#include <DallasTemperature.h>
+/********************************************************************/
+// Data wire is plugged into pin 2 on the Arduino 
+#define ONE_WIRE_BUS 4 
+/********************************************************************/
+// Setup a oneWire instance to communicate with any OneWire devices  
+// (not just Maxim/Dallas temperature ICs) 
+OneWire oneWire(ONE_WIRE_BUS); 
+/********************************************************************/
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature sensors(&oneWire);
+
 //define the pins used by the transceiver module
 #define ss 5
 #define rst 14
@@ -233,7 +248,7 @@ void loop() {
           Serial.printf("Switching to upward mode...\n");
           digitalWrite(motor1Pin1,LOW);
           digitalWrite(motor1Pin2,HIGH); // moves in counterclockwise direction (up)
-          dutyCycle = 500;
+          dutyCycle = 200;
           ledcWrite(pwmChannel, dutyCycle);
           motor_status = 1; // motor should be moving
           break;
@@ -244,7 +259,7 @@ void loop() {
           ledcWrite(pwmChannel, dutyCycle);
           delay(10);
           digitalWrite(motor1Pin1,HIGH);
-          digitalWrite(motor1Pin2,LOW); // moves in counterclockwise direction (up)
+          digitalWrite(motor1Pin2,LOW); // moves in counterclockwise direction (down)
           motor_status = 1; // motor should be moving
           break;
         case 3: // auto
@@ -279,28 +294,28 @@ void loop() {
   // }
 
   // motor timer
-  if(motor_status == 1) // motor running
-  {
-    motor_time = motor_time+1;
-    if(motor_time % 1000 == 0)
-    {
-      Serial.printf("Motor Time is %d\n", motor_time);
-    }
-    // configure stop times
-    if(current_mode == 1 && motor_time>300000) // upward timing
-    {
-      dutyCycle = 0;
-      ledcWrite(pwmChannel, dutyCycle);
-      motor_status = 0;
-      motor_time = 0;
-    } else if(current_mode == 2 && motor_time>150000) // downward timing
-    {
-      dutyCycle = 0;
-      ledcWrite(pwmChannel, dutyCycle);
-      motor_status = 0;
-      motor_time = 0;
-    }
-  }
+  // if(motor_status == 1) // motor running
+  // {
+  //   motor_time = motor_time+1;
+  //   if(motor_time % 1000 == 0)
+  //   {
+  //     Serial.printf("Motor Time is %d\n", motor_time);
+  //   }
+  //   // configure stop times
+  //   if(current_mode == 1 && motor_time>300000) // upward timing
+  //   {
+  //     dutyCycle = 0;
+  //     ledcWrite(pwmChannel, dutyCycle);
+  //     motor_status = 0;
+  //     motor_time = 0;
+  //   } else if(current_mode == 2 && motor_time>150000) // downward timing
+  //   {
+  //     dutyCycle = 0;
+  //     ledcWrite(pwmChannel, dutyCycle);
+  //     motor_status = 0;
+  //     motor_time = 0;
+  //   }
+  // }
 
 
 
@@ -310,9 +325,13 @@ void loop() {
     // sleep when not doing things
     //delay(7*1000); // 7 second delay between sensor checks
     // read ALL the SENSORS
-    temp_ambient     = 23.45;
+
+    sensors.requestTemperatures();
+    delay(30);
+    //Serial.println(sensors.getTempCByIndex(0));
+    temp_ambient     = 0.0;
     pressure_ambient = 1011.66;
-    wind_speed       = 4.5;
+    wind_speed       = 0.0;
     lux              = 0.0;
     temp_water       = 19.3456433;
     pressure_water   = 990.0;

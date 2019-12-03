@@ -33,26 +33,27 @@ void loop() {
   if(Serial.available()){
     code = Serial.read(); 
     myNum = Serial.parseInt();
-  }
 
-  switch(code) {
-  case 'p':
     // ping code block
-    Serial.print("Sending Ping - ID: ");
+    Serial.print("Sending Packet - ID: ");
+    Serial.print(code);
     Serial.println(myNum); 
     
     LoRa.beginPacket();
     LoRa.print(code);
     LoRa.print(myNum);
     LoRa.endPacket();
-
-    break;
-  case 'g':
-    Serial.println("Sending Get Data ");
-    break;
-  default:
-    int i = 0;
   }
 
-  code = '0'; 
+  int packetSize = LoRa.parsePacket();
+  if (packetSize) {
+    // received a packet
+    //Serial.print("Received packet '");
+
+    // read packet
+    while (LoRa.available()) {
+      String LoRaData = LoRa.readString();
+      Serial.print(LoRaData); 
+    }
+  }
 }
