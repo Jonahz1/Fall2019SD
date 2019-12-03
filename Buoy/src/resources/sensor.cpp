@@ -259,3 +259,8 @@ float sensor::temperature()
 {
     return TEMP / 100.0f;
 }
+
+float sensor::wind_speed(){
+    int speed = analogRead(34);
+    return float(speed);
+}

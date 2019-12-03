@@ -9,6 +9,8 @@ class sensor {
         float pressure(float conversion = 1.0f);
         float temperature();
         void read();
+        float wind_speed();
+        
 
 
     private:

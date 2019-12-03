@@ -2,6 +2,36 @@
 #include "./resources/eeprom.h"
 #include <Wire.h>
 
+//MOTOR SETUP ///////////////////////////////////////////
+//Encoder Pins
+#define encoder_a 32
+
+int count = 0; 
+
+// Motor A
+int motor1Pin1 = 27; 
+int motor1Pin2 = 26; 
+int enable1Pin = 13; 
+
+// Setting PWM properties
+const int freq = 30000;
+const int pwmChannel = 0;
+const int resolution = 8;
+int dutyCycle = 200;
+
+// Motor ISR
+void EncoderEvent() {
+  count++;
+  //Serial.print(count);
+  if (count == 4000){
+    Serial.println("Count is 4000");
+    Serial.print(count);
+  }
+
+  if(count%100==0){
+    Serial.print(count);
+  }
+}
 
 //LoRa  ------------------------------
 #include <LoRa.h>
@@ -27,6 +57,26 @@ void onLoRaRx(int packetSize){
 }
 
 void setup() {
+
+  // Motor //////////////////////////////////////////////
+  pinMode(encoder_a, INPUT);
+
+  // sets the pins as outputs:
+  pinMode(motor1Pin1, OUTPUT);
+  pinMode(motor1Pin2, OUTPUT);
+  pinMode(enable1Pin, OUTPUT);
+  
+  // configure LED PWM functionalitites
+  ledcSetup(pwmChannel, freq, resolution);
+  
+  // attach the channel to the GPIO to be controlled
+  ledcAttachPin(enable1Pin, pwmChannel);
+  ledcWrite(pwmChannel, dutyCycle);
+  attachInterrupt(digitalPinToInterrupt(encoder_a), EncoderEvent, CHANGE);
+  //Spin the motor forward
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH); 
+  //////////////////////////////////////////////
 
   Wire.begin();
   Serial.begin(9600);
@@ -121,13 +171,13 @@ void loop() {
   lux              = 0.0;
   temp_water       = 19.3456433;
   pressure_water   = 990.0;
-  dissolved_oxygen = myData.dissolved_oxygen();
+  dissolved_oxygen =  myData.dissolved_oxygen();
   timestamp        = millis();
 
     // DEBUG
     myEEPROM.read_config_raw();
-    Serial.printf("%f %f %f %f %f %f %f %d\n", 
-                  temp_ambient, pressure_ambient, wind_speed, lux, temp_water, pressure_water, dissolved_oxygen, timestamp);
+    // Serial.printf("temp_ambient: %f \n pressure_ambient: %f \n wind_speed: %f \n %f %f %f %f %d\n", 
+    //               temp_ambient, pressure_ambient, wind_speed, lux, temp_water, pressure_water, dissolved_oxygen, timestamp);
 
   // construct packet
   memcpy(current_data_package+0,&temp_ambient,sizeof(float));
@@ -141,7 +191,7 @@ void loop() {
   // send packet
 
       // packet to serial
-      Serial.println((char*)&current_data_package);
+      //Serial.println((char*)&current_data_package);
       // packet to EEPROM
 
       // packet to LoRa
