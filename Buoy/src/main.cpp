@@ -9,18 +9,18 @@
 
 //Temp //////////////////////////////
 
-#include <OneWire.h> 
-#include <DallasTemperature.h>
+// #include <OneWire.h> 
+// #include <DallasTemperature.h>
 /********************************************************************/
 // Data wire is plugged into pin 2 on the Arduino 
-#define ONE_WIRE_BUS 4 
+// #define ONE_WIRE_BUS 4 
 /********************************************************************/
 // Setup a oneWire instance to communicate with any OneWire devices  
 // (not just Maxim/Dallas temperature ICs) 
-OneWire oneWire(ONE_WIRE_BUS); 
+// OneWire oneWire(ONE_WIRE_BUS); 
 /********************************************************************/
 // Pass our oneWire reference to Dallas Temperature. 
-DallasTemperature sensors(&oneWire);
+// DallasTemperature sensors(&oneWire);
 
 //define the pins used by the transceiver module
 #define ss 5
@@ -159,16 +159,8 @@ void setup() {
   } // end if EEPROM init
 
   //Initialize sensors - resets and calibrates sensors
-  Serial.print("Initializing Sensors");
-  if (myData.init()){
-    Serial.print(".");
-    delay(1000); // small delay between function calls
-  }
-  Serial.println("");
-  Serial.println("Sensor Init Complete!");
-
-  //Lets see what I2C devices are out there... after we have already initialized our sensors
-  myData.i2c_scan();
+  myData.init();
+  myData.i2c_scan(); // default bus only
 
   //LoRa Init ------------
   //setup LoRa transceiver module
@@ -326,16 +318,16 @@ void loop() {
     //delay(7*1000); // 7 second delay between sensor checks
     // read ALL the SENSORS
 
-    sensors.requestTemperatures();
+    // sensors.requestTemperatures();
     delay(30);
     //Serial.println(sensors.getTempCByIndex(0));
-    temp_ambient     = 0.0;
-    pressure_ambient = 1011.66;
-    wind_speed       = 0.0;
+    temp_ambient     = myData.get_above_temperature();
+    pressure_ambient = myData.get_above_pressure();
+    wind_speed       = myData.wind_speed();
     lux              = 0.0;
-    temp_water       = 19.3456433;
-    pressure_water   = 990.0;
-    dissolved_oxygen = myData.dissolved_oxygen();
+    temp_water       = myData.get_below_temperature();
+    pressure_water   = myData.get_below_pressure();
+    dissolved_oxygen = myData.get_dissolved_oxygen();
     timestamp        = millis();
 
       // DEBUG

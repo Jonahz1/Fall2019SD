@@ -80,6 +80,8 @@ bool sensor::init()
         Serial.printf("Bar02 Below failed to initialize. \n");
     }
 
+    return true;
+
     // //Reset the Bar02 Pressure Sensor, per datasheet
     // Wire.beginTransmission(MS5837_ADDR);
     // Wire.write(MS5837_RESET);

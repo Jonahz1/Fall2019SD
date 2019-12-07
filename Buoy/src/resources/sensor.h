@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include <Wire.h>
-
+#include <cstdbool>
 
 class sensor {
     public: 
