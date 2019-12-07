@@ -28,7 +28,7 @@ class sensor {
         uint8_t crc4(uint16_t n_prom[]);
         void calculate();
 
-        TwoWire above_sensors = TwoWire(0);
-        TwoWire below_sensors = TwoWire(1);
+        TwoWire below_sensors = TwoWire(0);
+        TwoWire above_sensors = TwoWire(1);
         
 };

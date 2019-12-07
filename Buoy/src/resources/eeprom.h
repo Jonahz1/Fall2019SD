@@ -1,4 +1,5 @@
 #include "Arduino.h"
+#include <Wire.h>
 
 #define MAX_EEPROM_SIZE 256000
 
@@ -30,4 +31,5 @@ class eeprom {
         const unsigned int eeprom_addr_next_addr = 0x2; // 2
         const unsigned int eeprom_addr_interval  = 0xA; // 10
                                                // 14 would be next
+        TwoWire eeprom_bus = TwoWire(1);
 };

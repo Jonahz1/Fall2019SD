@@ -1,4 +1,3 @@
-#include <Wire.h>
 #include "eeprom.h"
 
 #define EEPROM_ADDR 0x50
@@ -8,6 +7,18 @@ eeprom::eeprom(){}
 
 bool eeprom::init()
 {
+    eeprom_bus.begin(32,33);
+    delay(10);
+    eeprom_bus.beginTransmission(EEPROM_ADDR);
+    int error = eeprom_bus.endTransmission();
+    delay(10);
+    if(error == 0)
+    {
+        Serial.println("Found EEPROM at address 0x50");
+    } else{
+        Serial.println("Could not find EEPROM");
+    }
+    delay(10);
     return true; 
 }
 
@@ -15,15 +26,15 @@ bool eeprom::init()
 byte eeprom::read(unsigned int eeaddress) {
     byte rdata = 0xFF;
     
-    Wire.beginTransmission(EEPROM_ADDR);
+    eeprom_bus.beginTransmission(EEPROM_ADDR);
     //address is sent in two bytes
-    Wire.write((int)(eeaddress >> 8));   // MSB 
-    Wire.write((int)(eeaddress & 0xFF)); // LSB
-    Wire.endTransmission();
+    eeprom_bus.write((int)(eeaddress >> 8));   // MSB 
+    eeprom_bus.write((int)(eeaddress & 0xFF)); // LSB
+    eeprom_bus.endTransmission();
     
-    Wire.requestFrom(EEPROM_ADDR,1);
+    eeprom_bus.requestFrom(EEPROM_ADDR,1);
     
-    if (Wire.available()) rdata = Wire.read();
+    if (eeprom_bus.available()) rdata = eeprom_bus.read();
  
     return rdata;
 }
@@ -31,11 +42,11 @@ byte eeprom::read(unsigned int eeaddress) {
 void eeprom::write(unsigned int eeaddress, byte data)
 {
     //Since there are 32,000 addresses in our EEPROM, we have to send the address in two bytes; MSB & LSB
-    Wire.beginTransmission(EEPROM_ADDR);
-    Wire.write((int)(eeaddress >> 8));   // MSB
-    Wire.write((int)(eeaddress & 0xFF)); // LSB
-    Wire.write(data);
-    Wire.endTransmission();
+    eeprom_bus.beginTransmission(EEPROM_ADDR);
+    eeprom_bus.write((int)(eeaddress >> 8));   // MSB
+    eeprom_bus.write((int)(eeaddress & 0xFF)); // LSB
+    eeprom_bus.write(data);
+    eeprom_bus.endTransmission();
 
     delay(5);
 
@@ -49,13 +60,13 @@ void eeprom::page_write(unsigned int eeaddress, byte *data_arr, int length)
         Serial.println("ERROR! PAGE WRITE ONLY SUPPORTS 32 bytes. Only 32 have been written");
     }
     //Since there are 32,000 addresses in our EEPROM, we have to send the address in two bytes; MSB & LSB
-    Wire.beginTransmission(EEPROM_ADDR);
-    Wire.write((int)(eeaddress >> 8));   // MSB
-    Wire.write((int)(eeaddress & 0xFF)); // LSB
+    eeprom_bus.beginTransmission(EEPROM_ADDR);
+    eeprom_bus.write((int)(eeaddress >> 8));   // MSB
+    eeprom_bus.write((int)(eeaddress & 0xFF)); // LSB
     for(int i = 0; i<length; i++){
-        Wire.write(data_arr[i]);
+        eeprom_bus.write(data_arr[i]);
     }
-    Wire.endTransmission();
+    eeprom_bus.endTransmission();
     delay(5);
     Serial.println("EEPROM Page Write Complete");
 }
@@ -65,17 +76,17 @@ void eeprom::page_read (unsigned int eeaddress, byte*data_arr, int length) // re
     byte rdata = 0xFF;
     int i = 0; // current index
     
-    Wire.beginTransmission(EEPROM_ADDR);
+    eeprom_bus.beginTransmission(EEPROM_ADDR);
     //address is sent in two bytes
-    Wire.write((int)(eeaddress >> 8));   // MSB 
-    Wire.write((int)(eeaddress & 0xFF)); // LSB
-    Wire.endTransmission();
+    eeprom_bus.write((int)(eeaddress >> 8));   // MSB 
+    eeprom_bus.write((int)(eeaddress & 0xFF)); // LSB
+    eeprom_bus.endTransmission();
     
-    Wire.requestFrom(EEPROM_ADDR,length);
+    eeprom_bus.requestFrom(EEPROM_ADDR,length);
     
-    while (Wire.available())
+    while (eeprom_bus.available())
     {
-        rdata = Wire.read();
+        rdata = eeprom_bus.read();
         data_arr[i] = rdata;
         i++;
     }
