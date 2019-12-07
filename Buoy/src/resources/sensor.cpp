@@ -1,4 +1,3 @@
-#include <Wire.h>
 #include "sensor.h"
 
 //bar02 information
@@ -9,6 +8,9 @@
 #define MS5837_CONVERT_D1_8192 0x4A
 #define MS5837_CONVERT_D2_8192 0x5A
 
+#define BAR02_ADDR 0x76
+#define DO_ADDR 0x61
+
 sensor::sensor()
 {
 }
@@ -17,22 +19,113 @@ sensor::sensor()
 //this will be run in the main - setup()
 bool sensor::init()
 {
+    //TwoWire above_sensors = TwoWire(0);
+    //TwoWire below_sensors = TwoWire(1);
+
+    above_sensors.begin(32, 33, 100000); // sda is 32, scl is 33
+    delay(10);
+    below_sensors.begin(21,22); //sda:21 -- scl:22
+    delay(10);
+
+    //Check to make sure if sensors are avaliable on i2c bus
+
+    //above_sensors
+    //bar02 - address: 0x76
+    int error; 
+    above_sensors.beginTransmission(BAR02_ADDR);
+    error = above_sensors.endTransmission();
+    delay(10);
+    if(error == 0)
+    {
+        Serial.printf("Above BAR02 Found at address %x \n", BAR02_ADDR);
+    } else{
+        return false; 
+    }
+
+    //below_sensors
+    //bar02 - address: 0x76
+    //DO    - address: 0x61
+    below_sensors.beginTransmission(BAR02_ADDR);
+    error = below_sensors.endTransmission();
+    delay(10);
+    if(error == 0)
+    {
+        Serial.printf("Below BAR02 Found at address %x \n", BAR02_ADDR);
+    } else{
+        return false; 
+    }
+
+    below_sensors.beginTransmission(DO_ADDR);
+    error = below_sensors.endTransmission();
+    delay(10);
+    if(error == 0)
+    {
+        Serial.printf("Below DO sensor Found at address %x \n", DO_ADDR);
+    } else{
+        return false; 
+    }
+
+    //Init Bar02 Sensors
+    if(init_bar02_above())
+    {
+        Serial.printf("Bar02 Above Initialized! \n");
+    } else {
+        Serial.printf("Bar02 Above failed to initialize. \n");
+    }
+    
+    if(init_bar02_below())
+    {
+        Serial.printf("Bar02 Below Initialized! \n");
+    } else {
+        Serial.printf("Bar02 Below failed to initialize. \n");
+    }
+
+    // //Reset the Bar02 Pressure Sensor, per datasheet
+    // Wire.beginTransmission(MS5837_ADDR);
+    // Wire.write(MS5837_RESET);
+    // Wire.endTransmission();
+
+    // delay(10); //wait for reset to complete
+
+    // // Read calibration values and CRC
+    // for (uint8_t i = 0; i < 7; i++)
+    // {
+    //     Wire.beginTransmission(MS5837_ADDR);
+    //     Wire.write(MS5837_PROM_READ + i * 2);
+    //     Wire.endTransmission();
+
+    //     Wire.requestFrom(MS5837_ADDR, 2);
+    //     C[i] = (Wire.read() << 8) | Wire.read();
+    // }
+
+    // // Verify that data is correct with CRC
+    // uint8_t crcRead = C[0] >> 12;
+    // uint8_t crcCalculated = crc4(C);
+
+    // if (crcCalculated == crcRead)
+    // {
+    //     return true; // Initialization success
+    // }
+
+    // return false; // CRC fail
+}
+bool sensor::init_bar02_above(){
     //Reset the Bar02 Pressure Sensor, per datasheet
-    Wire.beginTransmission(MS5837_ADDR);
-    Wire.write(MS5837_RESET);
-    Wire.endTransmission();
+    above_sensors.beginTransmission(MS5837_ADDR);
+    above_sensors.write(MS5837_RESET);
+    above_sensors.endTransmission();
 
     delay(10); //wait for reset to complete
 
     // Read calibration values and CRC
     for (uint8_t i = 0; i < 7; i++)
     {
-        Wire.beginTransmission(MS5837_ADDR);
-        Wire.write(MS5837_PROM_READ + i * 2);
-        Wire.endTransmission();
+        above_sensors.beginTransmission(MS5837_ADDR);
+        above_sensors.write(MS5837_PROM_READ + i * 2);
+        above_sensors.endTransmission();
 
-        Wire.requestFrom(MS5837_ADDR, 2);
-        C[i] = (Wire.read() << 8) | Wire.read();
+        above_sensors.requestFrom(MS5837_ADDR, 2);
+        C[i] = (above_sensors.read() << 8) | above_sensors.read();
     }
 
     // Verify that data is correct with CRC
@@ -47,6 +140,36 @@ bool sensor::init()
     return false; // CRC fail
 }
 
+bool sensor::init_bar02_below(){
+    //Reset the Bar02 Pressure Sensor, per datasheet
+    below_sensors.beginTransmission(MS5837_ADDR);
+    below_sensors.write(MS5837_RESET);
+    below_sensors.endTransmission();
+
+    delay(10); //wait for reset to complete
+
+    // Read calibration values and CRC
+    for (uint8_t i = 0; i < 7; i++)
+    {
+        below_sensors.beginTransmission(MS5837_ADDR);
+        below_sensors.write(MS5837_PROM_READ + i * 2);
+        below_sensors.endTransmission();
+
+        below_sensors.requestFrom(MS5837_ADDR, 2);
+        C[i] = (below_sensors.read() << 8) | below_sensors.read();
+    }
+
+    // Verify that data is correct with CRC
+    uint8_t crcRead = C[0] >> 12;
+    uint8_t crcCalculated = crc4(C);
+
+    if (crcCalculated == crcRead)
+    {
+        return true; // Initialization success
+    }
+
+    return false; // CRC fail
+}
 //method to scan for all i2c devices
 void sensor::i2c_scan()
 {
@@ -91,39 +214,34 @@ void sensor::i2c_scan()
 }
 
 //method will print the DO levels
-float sensor::dissolved_oxygen()
+float sensor::get_dissolved_oxygen()
 {
     char do_data[20];
     byte in_char = 0;
     byte i = 0;
-    Wire.beginTransmission(97); //call the circuit by its ID number.
-    Wire.write('r');            //transmit the command that was sent through the serial port. r is read DO
-    Wire.endTransmission();
+    below_sensors.beginTransmission(97); //call the circuit by its ID number.
+    below_sensors.write('r');            //transmit the command that was sent through the serial port. r is read DO
+    below_sensors.endTransmission();
 
     delay(600); // 600ms delay before our reading data is ready
 
-    Wire.requestFrom(97, 20, 1);
+    below_sensors.requestFrom(97, 20, 1);
     //int code = Wire.read();
 
-    while (Wire.available())
+    while (below_sensors.available())
     {                          //are there bytes to receive.
-        in_char = Wire.read(); //receive a byte.
+        in_char = below_sensors.read(); //receive a byte.
         //Serial.println(in_char);
         do_data[i] = in_char; //load this byte into our array.
         i += 1;               //incur the counter for the array element.
         if (in_char == 0)
         {                           //if we see that we have been sent a null command. (null is 0)
             i = 0;                  //reset the counter i to 0.
-            Wire.endTransmission(); //end the I2C data transmission.
+            below_sensors.endTransmission(); //end the I2C data transmission.
             break;                  //exit the while loop.
         }
     }
 
-    // Serial.print(do_data[1]);
-    // Serial.print(do_data[2]);
-    // Serial.print(do_data[3]);
-    // Serial.print(do_data[4]);
-    // Serial.print(do_data[5]);
     String data;
     for (int i = 1; i <= 5; i++)
     {
@@ -169,42 +287,43 @@ uint8_t sensor::crc4(uint16_t n_prom[])
     return n_rem ^ 0x00;
 }
 
+
 //bar02 pressure sensor supporting method
-void sensor::read()
+void sensor::read_above_bar02()
 {
     // Request D1 conversion
-    Wire.beginTransmission(MS5837_ADDR);
-    Wire.write(MS5837_CONVERT_D1_8192);
-    Wire.endTransmission();
+    above_sensors.beginTransmission(MS5837_ADDR);
+    above_sensors.write(MS5837_CONVERT_D1_8192);
+    above_sensors.endTransmission();
 
     delay(20); // Max conversion time per datasheet
 
-    Wire.beginTransmission(MS5837_ADDR);
-    Wire.write(MS5837_ADC_READ);
-    Wire.endTransmission();
+    above_sensors.beginTransmission(MS5837_ADDR);
+    above_sensors.write(MS5837_ADC_READ);
+    above_sensors.endTransmission();
 
-    Wire.requestFrom(MS5837_ADDR, 3);
+    above_sensors.requestFrom(MS5837_ADDR, 3);
     D1 = 0;
-    D1 = Wire.read();
-    D1 = (D1 << 8) | Wire.read();
-    D1 = (D1 << 8) | Wire.read();
+    D1 = above_sensors.read();
+    D1 = (D1 << 8) | above_sensors.read();
+    D1 = (D1 << 8) | above_sensors.read();
 
     // Request D2 conversion
-    Wire.beginTransmission(MS5837_ADDR);
-    Wire.write(MS5837_CONVERT_D2_8192);
-    Wire.endTransmission();
+    above_sensors.beginTransmission(MS5837_ADDR);
+    above_sensors.write(MS5837_CONVERT_D2_8192);
+    above_sensors.endTransmission();
 
     delay(20); // Max conversion time per datasheet
 
-    Wire.beginTransmission(MS5837_ADDR);
-    Wire.write(MS5837_ADC_READ);
-    Wire.endTransmission();
+    above_sensors.beginTransmission(MS5837_ADDR);
+    above_sensors.write(MS5837_ADC_READ);
+    above_sensors.endTransmission();
 
-    Wire.requestFrom(MS5837_ADDR, 3);
+    above_sensors.requestFrom(MS5837_ADDR, 3);
     D2 = 0;
-    D2 = Wire.read();
-    D2 = (D2 << 8) | Wire.read();
-    D2 = (D2 << 8) | Wire.read();
+    D2 = above_sensors.read();
+    D2 = (D2 << 8) | above_sensors.read();
+    D2 = (D2 << 8) | above_sensors.read();
 
     calculate();
 }
@@ -250,13 +369,27 @@ void sensor::calculate()
     P = (((D1 * SENS2) / 2097152l - OFF2) / 32768l);
 }
 
-float sensor::pressure(float conversion)
+float sensor::get_above_pressure(float conversion)
 {
+    read_above_bar02();
     return P * conversion / 100.0f;
 }
 
-float sensor::temperature()
+float sensor::get_above_temperature()
 {
+    read_above_bar02();
+    return TEMP / 100.0f;
+}
+
+float sensor::get_below_pressure(float conversion)
+{
+    read_below_bar02();
+    return P * conversion / 100.0f;
+}
+
+float sensor::get_below_temperature()
+{
+    read_below_bar02();
     return TEMP / 100.0f;
 }
 
@@ -266,3 +399,43 @@ float sensor::wind_speed(){
     //float y = map(speed, 320,2418,0,32.1);
     return float(speed);
 }
+
+void sensor::read_below_bar02()
+{
+    // Request D1 conversion
+    below_sensors.beginTransmission(MS5837_ADDR);
+    below_sensors.write(MS5837_CONVERT_D1_8192);
+    below_sensors.endTransmission();
+
+    delay(20); // Max conversion time per datasheet
+
+    below_sensors.beginTransmission(MS5837_ADDR);
+    below_sensors.write(MS5837_ADC_READ);
+    below_sensors.endTransmission();
+
+    below_sensors.requestFrom(MS5837_ADDR, 3);
+    D1 = 0;
+    D1 = below_sensors.read();
+    D1 = (D1 << 8) | below_sensors.read();
+    D1 = (D1 << 8) | below_sensors.read();
+
+    // Request D2 conversion
+    below_sensors.beginTransmission(MS5837_ADDR);
+    below_sensors.write(MS5837_CONVERT_D2_8192);
+    below_sensors.endTransmission();
+
+    delay(20); // Max conversion time per datasheet
+
+    below_sensors.beginTransmission(MS5837_ADDR);
+    below_sensors.write(MS5837_ADC_READ);
+    below_sensors.endTransmission();
+
+    below_sensors.requestFrom(MS5837_ADDR, 3);
+    D2 = 0;
+    D2 = below_sensors.read();
+    D2 = (D2 << 8) | below_sensors.read();
+    D2 = (D2 << 8) | below_sensors.read();
+
+    calculate();
+}
+
