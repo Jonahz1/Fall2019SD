@@ -52,7 +52,7 @@ bool sensor::init()
     {
         Serial.printf("Below BAR02 Found at address %x \n", BAR02_ADDR);
     } else{
-        return false; 
+        Serial.printf("Below BAR02 not found \n");
     }
 
     below_sensors.beginTransmission(DO_ADDR);
@@ -62,7 +62,7 @@ bool sensor::init()
     {
         Serial.printf("Below DO sensor Found at address %x \n", DO_ADDR);
     } else{
-        return false; 
+        //return false; 
     }
 
     //Init Bar02 Sensors
