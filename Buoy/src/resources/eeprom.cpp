@@ -17,6 +17,7 @@ bool eeprom::init()
         Serial.println("Found EEPROM at address 0x50");
     } else{
         Serial.println("Could not find EEPROM");
+        return false;
     }
     delay(10);
     return true; 
