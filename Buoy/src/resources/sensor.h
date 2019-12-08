@@ -2,6 +2,9 @@
 #include <Wire.h>
 #include <cstdbool>
 
+#define ABOVE_WATER_PRESSURE_OFFSET (-175)/*in mbars*/
+#define ABOVE_WATER_TEMP_OFFSET     (-5)  /*in degrees Celsius*/
+
 class sensor {
     public: 
         sensor();

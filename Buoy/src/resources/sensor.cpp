@@ -374,13 +374,13 @@ void sensor::calculate()
 float sensor::get_above_pressure(float conversion)
 {
     read_above_bar02();
-    return P * conversion / 100.0f;
+    return (P * conversion / 100.0f) + ABOVE_WATER_PRESSURE_OFFSET;
 }
 
 float sensor::get_above_temperature()
 {
     read_above_bar02();
-    return TEMP / 100.0f;
+    return (TEMP / 100.0f) + ABOVE_WATER_TEMP_OFFSET;
 }
 
 float sensor::get_below_pressure(float conversion)

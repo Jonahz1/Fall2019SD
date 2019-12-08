@@ -120,11 +120,13 @@ void setup() {
   // STATUS_LED init
   digitalWrite(STATUS_LED, LOW);
 
-  Wire.begin();
+  //Wire.begin();
   Serial.begin(9600);
   delay(10);
   Serial.println(); // get past the noise of monitor setup
 
+  // initilize the two i2c buses
+  myData.init();
   if(myEEPROM.init()){
     Serial.println("EEPROM Initialized!");
     //next_addr = myEEPROM.read_next_address();
@@ -159,8 +161,8 @@ void setup() {
   } // end if EEPROM init
 
   //Initialize sensors - resets and calibrates sensors
-  myData.init();
-  myData.i2c_scan(); // default bus only
+  //myData.init();
+  //myData.i2c_scan(); // default bus only
 
   //LoRa Init ------------
   //setup LoRa transceiver module
@@ -356,6 +358,12 @@ void loop() {
 
         // packet to EEPROM
         myEEPROM.page_write(next_addr,current_data_package,32);
+        Serial.printf("LoRa sending: ");
+        int tempI = 0;
+        for(tempI = 0; tempI < 32; tempI++){
+          Serial.printf("0x%X ", current_data_package[tempI]);
+        }
+        Serial.printf("\n");
 
         // packet to LoRa
         LoRa.beginPacket();
