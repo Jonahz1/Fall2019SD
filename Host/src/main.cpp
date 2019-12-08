@@ -7,13 +7,16 @@
 #define rst 14
 #define dio0 2
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
-  while (!Serial);
+  while (!Serial)
+    ;
 
   //setup LoRa transceiver module
   LoRa.setPins(ss, rst, dio0);
-  while (!LoRa.begin(915E6)) {
+  while (!LoRa.begin(915E6))
+  {
     Serial.println(".");
     delay(500);
   }
@@ -26,19 +29,21 @@ void setup() {
   Serial.println("Starting Host Program");
 }
 char code;
-int myNum; 
+int myNum;
 
-void loop() {
+void loop()
+{
 
-  if(Serial.available()){
-    code = Serial.read(); 
+  if (Serial.available())
+  {
+    code = Serial.read();
     myNum = Serial.parseInt();
 
     // ping code block
     Serial.print("Sending Packet - ID: ");
     Serial.print(code);
-    Serial.println(myNum); 
-    
+    Serial.println(myNum);
+
     LoRa.beginPacket();
     LoRa.print(code);
     LoRa.print(myNum);
@@ -46,14 +51,24 @@ void loop() {
   }
 
   int packetSize = LoRa.parsePacket();
-  if (packetSize) {
+
+  if (packetSize)
+  {
+    String LoRaData;
     // received a packet
     //Serial.print("Received packet '");
-
     // read packet
-    while (LoRa.available()) {
-      String LoRaData = LoRa.readString();
-      Serial.print(LoRaData); 
+    while (LoRa.available())
+    {
+      LoRaData = LoRa.readString();
+      Serial.println(LoRaData);
     }
+    // char *data = (char *)LoRaData.c_str();
+
+    // for (int i = 0; i < 32; i++)
+    // {
+    //   Serial.printf("%X ", LoRaData[i]);
+    // }
+    // Serial.println();
   }
 }
