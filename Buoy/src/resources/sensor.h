@@ -19,7 +19,7 @@ class sensor {
         float get_below_temperature();
         void read_above_bar02();
         void read_below_bar02();
-        float wind_speed();
+        float get_wind_speed();
         
     private:
         //used for bar02

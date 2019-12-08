@@ -395,11 +395,12 @@ float sensor::get_below_temperature()
     return TEMP / 100.0f;
 }
 
-float sensor::wind_speed(){
+float sensor::get_wind_speed(){
     
     int speed = analogRead(34);
+
     //float y = map(speed, 320,2418,0,32.1);
-    return float(speed);
+    return (((float)(speed-320))*(32.4/1600.0));
 }
 
 void sensor::read_below_bar02()

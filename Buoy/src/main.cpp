@@ -200,7 +200,8 @@ int motor_time = 0;
 int loopTime = 0;
 
 void loop() {
-
+  //if (loopTime%1000 == 0){Serial.printf("Wind Speed: %f m/s \n",myData.get_wind_speed());}
+  
 // if(in_history_mode) // burst transmit one history cell at a time
 // {
   
@@ -325,7 +326,7 @@ void loop() {
     //Serial.println(sensors.getTempCByIndex(0));
     temp_ambient     = myData.get_above_temperature();
     pressure_ambient = myData.get_above_pressure();
-    wind_speed       = myData.wind_speed();
+    wind_speed       = myData.get_wind_speed();
     lux              = 0.0;
     temp_water       = myData.get_below_temperature();
     pressure_water   = myData.get_below_pressure();
