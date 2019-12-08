@@ -335,6 +335,8 @@ void loop() {
 
       // DEBUG
       myEEPROM.read_config_raw();
+      //Serial.printf("Above water temp: %f\n",temp_ambient);
+      //Serial.printf("Above water pres: %f\n",pressure_ambient);
       //Serial.printf("temp_ambient: %f \t pressure_ambient: %f \t wind_speed: %f \t %f %f %f %f %d\n", 
       //              temp_ambient, pressure_ambient, wind_speed, lux, temp_water, pressure_water, dissolved_oxygen, timestamp);
 
