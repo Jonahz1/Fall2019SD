@@ -109,7 +109,7 @@ void setup() {
   
   // attach the channel to the GPIO to be controlled
   ledcAttachPin(enable1Pin, pwmChannel);
-  dutyCycle = 200;
+  dutyCycle = 0;
   ledcWrite(pwmChannel, dutyCycle);
   // attachInterrupt(digitalPinToInterrupt(encoder_a), EncoderEvent, RISING);
   delay(10);
@@ -243,7 +243,7 @@ void loop() {
           Serial.printf("Switching to upward mode...\n");
           digitalWrite(motor1Pin1,LOW);
           digitalWrite(motor1Pin2,HIGH); // moves in counterclockwise direction (up)
-          dutyCycle = 200;
+          dutyCycle = 250;
           ledcWrite(pwmChannel, dutyCycle);
           motor_status = 1; // motor should be moving
           break;
